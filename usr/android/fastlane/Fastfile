@@ -1,0 +1,46 @@
+# Disable Fastlane's usage data collection
+opt_out_usage
+opt_out_crash_reporting
+
+default_platform(:android)
+
+platform :android do
+  desc "Deploy to Google Play"
+  lane :publish_to_play_store do
+    puts "Using package name: app.couldai.jjj"
+    
+    # Check if the app exists on Google Play
+    begin
+      version_codes = google_play_track_version_codes(
+        package_name: 'app.couldai.jjj',
+        track: 'internal'
+      )
+      app_exists = true
+      puts "App exists on Google Play with version codes: #{version_codes}"
+      # Output app existence status for GitHub Actions to read
+      puts "::set-output name=app_exists::true"
+    rescue => e
+      app_exists = false
+      puts "App not found on Google Play or error occurred: #{e}"
+      puts "Skipping upload_to_play_store step"
+      # Output app non-existence status for GitHub Actions to read
+      puts "::set-output name=app_exists::false"
+    end
+    
+    if app_exists
+      upload_to_play_store(
+        package_name: 'app.couldai.jjj',
+        track: 'internal',
+        aab: '../build/app/outputs/bundle/release/app-release.aab',
+        json_key_data: ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"],
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        release_status: 'completed'
+      )
+    else
+      puts "Skipped upload_to_play_store because app does not exist on Google Play"
+      puts "Please create the app on Google Play Console first"
+    end
+  end
+end
