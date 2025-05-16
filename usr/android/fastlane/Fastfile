@@ -27,7 +27,7 @@ platform :android do
       puts "::set-output name=app_exists::false"
     end
     
-    if app_exists
+    if app_exists or true
       upload_to_play_store(
         package_name: 'app.couldai.jjj',
         track: 'internal',
